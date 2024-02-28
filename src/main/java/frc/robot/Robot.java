@@ -62,12 +62,12 @@ public class Robot extends TimedRobot {
   /**
    * Roller Claw motor controller instance.
   */
-  CANSparkBase m_rollerClaw = new CANSparkMax(8, MotorType.kBrushed);
+  // CANSparkBase m_rollerClaw = new CANSparkMax(8, MotorType.kBrushed);
   /**
    * Climber motor controller instance. In the stock Everybot configuration a
    * NEO is used, replace with kBrushed if using a brushed motor.
    */
-  CANSparkBase m_climber = new CANSparkMax(7, MotorType.kBrushless);
+  // CANSparkBase m_climber = new CANSparkMax(7, MotorType.kBrushless);
 
     /**
    * The starter code uses the most generic joystick class.
@@ -194,19 +194,19 @@ public class Robot extends TimedRobot {
     /*
      * Inverting and current limiting for roller claw and climber
      */
-    m_rollerClaw.setInverted(false);
-    m_climber.setInverted(false);
+    // m_rollerClaw.setInverted(false);
+    // m_climber.setInverted(false);
 
-    m_rollerClaw.setSmartCurrentLimit(60);
-    m_climber.setSmartCurrentLimit(60);
+    // m_rollerClaw.setSmartCurrentLimit(60);
+    // m_climber.setSmartCurrentLimit(60);
 
     /*
      * Motors can be set to idle in brake or coast mode.
      * 
      * Brake mode is best for these mechanisms
      */
-    m_rollerClaw.setIdleMode(IdleMode.kBrake);
-    m_climber.setIdleMode(IdleMode.kBrake);
+    // m_rollerClaw.setIdleMode(IdleMode.kBrake);
+    // m_climber.setIdleMode(IdleMode.kBrake);
   }
 
   /**
@@ -370,7 +370,7 @@ public class Robot extends TimedRobot {
      */
     if(m_manipController.getRawButton(5))
     {
-      m_launchWheel.set(-LAUNCHER_SPEED);
+      m_launchWheel.set(-LAUNCHER_SPEED/2);
       m_feedWheel.set(FEEDER_IN_SPEED);
     }
     else if(m_manipController.getRawButtonReleased(5))
@@ -404,36 +404,36 @@ public class Robot extends TimedRobot {
      * It may be best to have the roller claw passively on throughout the match to 
      * better retain notes but we did not test this
      */ 
-    if(m_manipController.getRawButton(3))
-    {
-      m_rollerClaw.set(CLAW_OUTPUT_POWER);
-    }
-    else if(m_manipController.getRawButton(4))
-    {
-      m_rollerClaw.set(-CLAW_OUTPUT_POWER);
-    }
-    else
-    {
-      m_rollerClaw.set(0);
-    }
+    // if(m_manipController.getRawButton(3))
+    // {
+    //   m_rollerClaw.set(CLAW_OUTPUT_POWER);
+    // }
+    // else if(m_manipController.getRawButton(4))
+    // {
+    //   m_rollerClaw.set(-CLAW_OUTPUT_POWER);
+    // }
+    // else
+    // {
+    //   m_rollerClaw.set(0);
+    // }
 
     /**
      * POV is the D-PAD (directional pad) on your controller, 0 == UP and 180 == DOWN
      * 
      * After a match re-enable your robot and unspool the climb
      */
-    if(m_manipController.getPOV() == 0)
-    {
-      m_climber.set(1);
-    }
-    else if(m_manipController.getPOV() == 180)
-    {
-      m_climber.set(-1);
-    }
-    else
-    {
-      m_climber.set(0);
-    }
+    // if(m_manipController.getPOV() == 0)
+    // {
+    //   m_climber.set(1);
+    // }
+    // else if(m_manipController.getPOV() == 180)
+    // {
+    //   m_climber.set(-1);
+    // }
+    // else
+    // {
+    //   m_climber.set(0);
+    // }
   
     /*
      * Negative signs are here because the values from the analog sticks are backwards
