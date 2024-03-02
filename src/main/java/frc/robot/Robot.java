@@ -56,8 +56,8 @@ public class Robot extends TimedRobot {
    *
    * Both of the motors used on the KitBot launcher are CIMs which are brushed motors
    */
-  CANSparkBase m_launchWheel = new CANSparkMax(6, MotorType.kBrushed);
-  CANSparkBase m_feedWheel = new CANSparkMax(5, MotorType.kBrushed);
+  CANSparkBase m_launchWheel = new CANSparkMax(6, MotorType.kBrushless);
+  CANSparkBase m_feedWheel = new CANSparkMax(5, MotorType.kBrushless);
 
   /**
    * Roller Claw motor controller instance.
@@ -104,7 +104,7 @@ public class Robot extends TimedRobot {
   /**
    * Percent output to run the feeder when intaking note
    */
-  static final double FEEDER_IN_SPEED = -.4;
+  static final double FEEDER_IN_SPEED = -.2;
 
   /**
    * Percent output for amp or drop note, configure based on polycarb bend
@@ -182,8 +182,8 @@ public class Robot extends TimedRobot {
      *
      * Add white tape to wheel to help determine spin direction.
      */
-    m_feedWheel.setInverted(true);
-    m_launchWheel.setInverted(true);
+    m_feedWheel.setInverted(false);
+    m_launchWheel.setInverted(false);
 
     /*
      * Apply the current limit to the launching mechanism
@@ -249,9 +249,9 @@ public class Robot extends TimedRobot {
     rightFront.setIdleMode(IdleMode.kBrake);
 
     AUTO_LAUNCH_DELAY_S = 2;
-    AUTO_DRIVE_DELAY_S = 3;
+    AUTO_DRIVE_DELAY_S = 4; //changed 3/1/2024 from 3
 
-    AUTO_DRIVE_TIME_S = 2.0;
+    AUTO_DRIVE_TIME_S = 3.0; //changed 3/1/2024 from 2.0
     AUTO_DRIVE_SPEED = -0.5;
     AUTO_LAUNCHER_SPEED = 1;
     
@@ -370,7 +370,7 @@ public class Robot extends TimedRobot {
      */
     if(m_manipController.getRawButton(5))
     {
-      m_launchWheel.set(-LAUNCHER_SPEED/2);
+      m_launchWheel.set(-LAUNCHER_SPEED);
       m_feedWheel.set(FEEDER_IN_SPEED);
     }
     else if(m_manipController.getRawButtonReleased(5))
