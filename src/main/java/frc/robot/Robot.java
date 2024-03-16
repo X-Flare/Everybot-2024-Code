@@ -56,8 +56,13 @@ public class Robot extends TimedRobot {
    *
    * Both of the motors used on the KitBot launcher are CIMs which are brushed motors
    */
+  //what is happening
   CANSparkBase m_launchWheel = new CANSparkMax(6, MotorType.kBrushless);
   CANSparkBase m_feedWheel = new CANSparkMax(5, MotorType.kBrushless);
+
+  CANSparkBase m_intakeWheel = new CANSparkMax(9, MotorType.kBrushless);
+  CANSparkBase m_intakeArm = new CANSparkMax(10, MotorType.kBrushless);
+
 
   /**
    * Roller Claw motor controller instance.
@@ -131,11 +136,11 @@ public class Robot extends TimedRobot {
   /**
    * Percent output for the roller claw
    */
-  static final double CLAW_OUTPUT_POWER = .5;
+  static final double INTAKE_ARM_POWER = .2;
   /**
    * Percent output to help retain notes in the claw
    */
-  static final double CLAW_STALL_POWER = .1;
+  static final double INATKE_WHEEL_SPEED = .4;
   /**
    * Percent output to power the climber
    */
@@ -404,18 +409,36 @@ public class Robot extends TimedRobot {
      * It may be best to have the roller claw passively on throughout the match to 
      * better retain notes but we did not test this
      */ 
-    // if(m_manipController.getRawButton(3))
-    // {
-    //   m_rollerClaw.set(CLAW_OUTPUT_POWER);
-    // }
-    // else if(m_manipController.getRawButton(4))
-    // {
-    //   m_rollerClaw.set(-CLAW_OUTPUT_POWER);
-    // }
-    // else
-    // {
-    //   m_rollerClaw.set(0);
-    // }
+
+    //intake wheel code
+
+    if(m_manipController.getRawButton(3))//BUTTON 3 IS X (on xbox)
+    {
+      m_intakeWheel.set(INTAKE_WHEEL_POWER);
+    }
+    else if(m_manipController.getRawButton(4))//BUTTON 4 IS Y (on xbox)
+    {
+      m_intakeWheel.set(-INTAKE_WHEEL_POWER);
+    }
+    else
+    {
+      m_intakeWheel.set(0);
+    }
+
+    //intake arm code
+
+    if(m_manipController.getPOV() == 0)//get pov (0) IS d-pad up (on xbox)
+    {
+      m_intakeArm.set(INTAKE_ARM_POWER);
+    }
+    else if(m_manipController.getPOV() == 180)//get pov (180) IS d-pad down (on xbox)
+    {
+      m_intakeArm.set(-INTAKE_ARM_POWER);
+    }
+    else
+    {
+      m_intakeArm.set(0);
+    }
 
     /**
      * POV is the D-PAD (directional pad) on your controller, 0 == UP and 180 == DOWN
