@@ -9,6 +9,8 @@ import com.revrobotics.CANSparkBase;
 import com.revrobotics.CANSparkBase.IdleMode;
 import com.revrobotics.CANSparkMax;
 import com.revrobotics.CANSparkLowLevel.MotorType;
+import com.revrobotics.RelativeEncoder;
+import com.revrobotics.SparkPIDController;
 
 import edu.wpi.first.wpilibj.Joystick;
 import edu.wpi.first.wpilibj.TimedRobot;
@@ -16,6 +18,7 @@ import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.drive.DifferentialDrive;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
+import edu.wpi.first.wpilibj.DigitalInput;
 
 
 public class Robot extends TimedRobot {
@@ -56,13 +59,17 @@ public class Robot extends TimedRobot {
    *
    * Both of the motors used on the KitBot launcher are CIMs which are brushed motors
    */
-  //what is happening
   CANSparkBase m_launchWheel = new CANSparkMax(6, MotorType.kBrushless);
   CANSparkBase m_feedWheel = new CANSparkMax(5, MotorType.kBrushless);
+
+  RelativeEncoder m_launchWheelEncoder = new RelativeEncoder(m_launchWheel.getEncoder());
 
   CANSparkBase m_intakeWheel = new CANSparkMax(9, MotorType.kBrushless);
   CANSparkBase m_intakeArm = new CANSparkMax(10, MotorType.kBrushless);
 
+  // SparkPIDController m_intakeArmPID = new SparkPIDController(m_intakeArm.getPIDController());
+  RelativeEncoder m_intakeArmEncoder = new RelativeEncoder(m_intakeArm.getEncoder());
+  DigitalInput m_intakeWheelLimitSwitch = new DigitalInput(0);
 
   /**
    * Roller Claw motor controller instance.
@@ -127,6 +134,10 @@ public class Robot extends TimedRobot {
    * Percent output to run the launcher when intaking AND expelling note
    */
   static final double LAUNCHER_SPEED = 1.0;
+  /**
+   * RPM target for the launcher wheel
+   */
+  static final double LAUNCHER_RPM = 5000;
 
   /**
    * Percent output for scoring in amp or dropping note, configure based on polycarb bend
@@ -140,11 +151,24 @@ public class Robot extends TimedRobot {
   /**
    * Percent output to help retain notes in the claw
    */
-  static final double INATKE_WHEEL_SPEED = .4;
+  static final double INTAKE_WHEEL_SPEED = .4;
   /**
    * Percent output to power the climber
    */
-  static final double CLIMER_OUTPUT_POWER = 1;
+  static final double CLIMBER_OUTPUT_POWER = 1;
+  /**
+   * Target encoder position for the intake arm while intaking
+   */
+  static final double INTAKE_ARM_INTAKE_POSITION = 100;
+  /**
+   * Target encoder position for the intake arm while scoring in the amp
+   */
+  static final double INTAKE_ARM_AMP_POSITION = 0;
+  /**
+   * Target encoder position for the intake arm while inside the robot
+   */
+  static final double INTAKE_ARM_INSIDE_POSITION = 0;
+
 
   /**
    * This function is run when the robot is first started up and should be used for any
@@ -361,9 +385,15 @@ public class Robot extends TimedRobot {
     /*
      * Spins feeder wheel, wait for launch wheel to spin up to full speed for best results
      */
+    // TODO: add logic to wait for the launcher wheel to spin up before feeding
+    // TODO: add logic to feed the note from the intake into the feeder wheel
     if (m_manipController.getRawButton(6))
     {
-      m_feedWheel.set(FEEDER_OUT_SPEED);
+      // if(m_launchWheelEncoder.getVelocity() > LAUNCHER_RPM) // Starter code for waiting for the launcher wheel to spin up
+      // {
+        // m.intakeWheel.set(INTAKE_WHEEL_SPEED); // Starter code for feeding the note into the feeder wheel
+        m_feedWheel.set(FEEDER_OUT_SPEED);
+      // }
     }
     else if(m_manipController.getRawButtonReleased(6))
     {
@@ -373,6 +403,7 @@ public class Robot extends TimedRobot {
     /*
      * While the button is being held spin both motors to intake note
      */
+    //TODO Remove or modify
     if(m_manipController.getRawButton(5))
     {
       m_launchWheel.set(-LAUNCHER_SPEED);
@@ -390,6 +421,7 @@ public class Robot extends TimedRobot {
      *
      * (this may take some driver practice to get working reliably)
      */
+    //TODO Remove or modify
     if(m_manipController.getRawButton(2))
     {
       m_feedWheel.set(FEEDER_AMP_SPEED);
@@ -401,17 +433,93 @@ public class Robot extends TimedRobot {
       m_launchWheel.set(0);
     }
 
+    //TODO: Add functionality so that when the button is pressed to run the intake,
+    //the intake arm will lower to a certain position. When the button is released, the
+    //intake arm will raise to a certain position.
+    //Also add a button in this same logic so that the arm will be raised/lowered to a certain position
+    //so that the robot can score in the Amp.
+
     /**
-     * Hold one of the two buttons to either intake or exjest note from roller claw
+     * Starter code for the above functionality
+     * Uncomment when ready to use
+     * You will need to modify the encoder positions and power levels to match your robot
      * 
-     * One button is positive claw power and the other is negative
+     * BUTTON 3 is X (on xbox)
+     * BUTTON 4 is Y (on xbox)
      * 
-     * It may be best to have the roller claw passively on throughout the match to 
-     * better retain notes but we did not test this
-     */ 
+     * Hold down button 3 to intake note. When the button is held, the intake arm will lower to a certain position.
+     * When the button is released, the intake arm will raise to a certain position.
+     * 
+     * Hold down button 4 to expel note. When the button is held, the intake arm will lower to a certain position.
+     * When the button is released, the intake arm will raise to a certain position.
+     * 
+     * The intake arm will also raise to a certain position when the button is released.
+     */
+    // if(m_manipController.getRawButton(3))
+    // {
 
-    //intake wheel code
+    //   // This code will lower the intake arm to a certain position when the button is held
+    //   if(m_intakeArmEncoder.getPosition() < INTAKE_ARM_INTAKE_POSITION)
+    //   {
+    //     m_intakeArm.set(INTAKE_ARM_POWER); // This will lower the intake arm
+    //   } else {
+    //     m_intakeArm.set(0); // This will stop the intake arm from moving
+    //   }
 
+    //   // This will stop the intake wheel from spinning if the limit switch is pressed
+    //   if(m_intakeWheelLimitSwitch.get()) 
+    //   {
+    //     m_intakeWheel.set(0); // This will stop the intake wheel from spinning
+    //   } else {
+    //     m_intakeWheel.set(INTAKE_WHEEL_SPEED); // This will spin the intake wheel
+    //   }
+
+    // }
+    // else if(m_manipController.getRawButton(4)) // This code will raise the intake arm to a certain position when the button is held
+    // {
+
+    //   // If the arm is already at Amp height, stop the arm from moving and spin out the intake wheel
+    //   if (m_intakeArmEncoder.getPosition() > INTAKE_ARM_AMP_POSITION-10 && m_intakeArmEncoder.getPosition() < INTAKE_ARM_AMP_POSITION+10)
+    //   {
+    //     m_intakeWheel.set(-INTAKE_WHEEL_SPEED);
+    //     m_intakeArm.set(0);
+    //   }
+    //   else if(m_intakeArmEncoder.getPosition() > INTAKE_ARM_AMP_POSITION) // If the arm is below the Amp height, raise the arm
+    //   {
+    //     m_intakeArm.set(-INTAKE_ARM_POWER);
+    //   } 
+    //   else if(m_intakeArmEncoder.getPosition() < INTAKE_ARM_AMP_POSITION) // If the arm is above the Amp height, lower the arm
+    //   {
+    //     m_intakeArm.set(INTAKE_ARM_POWER);
+    //   }
+      
+    // }
+    // else // This code will raise the intake arm to a certain position when the button is released
+    // {
+
+    //   // If the arm is not inside the robot, raise the arm
+    //   if(m_intakeArmEncoder.getPosition() > INTAKE_ARM_INSIDE_POSITION)
+    //   {
+    //     m_intakeArm.set(-INTAKE_ARM_POWER);
+    //   } 
+    //   else // If the arm is inside the robot, stop the arm from moving
+    //   {
+    //     m_intakeArm.set(0);
+    //   }
+    //   // This will stop the intake wheel from spinning if no button is pressed
+    //   m_intakeWheel.set(0);
+
+    // }
+
+
+
+    /**
+     * BUTTON 3 is X (on xbox)
+     * BUTTON 4 is Y (on xbox)
+     * 
+     * Hold down button 3 to intake note
+     * Hold down button 4 to expel note
+     */
     if(m_manipController.getRawButton(3))//BUTTON 3 IS X (on xbox)
     {
       m_intakeWheel.set(INTAKE_WHEEL_POWER);
@@ -425,8 +533,12 @@ public class Robot extends TimedRobot {
       m_intakeWheel.set(0);
     }
 
-    //intake arm code
-
+    /**
+     * POV is the D-PAD (directional pad) on your controller, 0 == UP and 180 == DOWN
+     * 
+     * Hold down d-pad up to raise the intake arm
+     * Hold down d-pad down to lower the intake arm
+     */
     if(m_manipController.getPOV() == 0)//get pov (0) IS d-pad up (on xbox)
     {
       m_intakeArm.set(INTAKE_ARM_POWER);
@@ -445,6 +557,7 @@ public class Robot extends TimedRobot {
      * 
      * After a match re-enable your robot and unspool the climb
      */
+    //TODO Remove or modify
     // if(m_manipController.getPOV() == 0)
     // {
     //   m_climber.set(1);
