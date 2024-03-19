@@ -62,13 +62,13 @@ public class Robot extends TimedRobot {
   CANSparkBase m_launchWheel = new CANSparkMax(6, MotorType.kBrushless);
   CANSparkBase m_feedWheel = new CANSparkMax(5, MotorType.kBrushless);
 
-  RelativeEncoder m_launchWheelEncoder = new RelativeEncoder(m_launchWheel.getEncoder());
+  RelativeEncoder m_launchWheelEncoder = m_launchWheel.getEncoder();
 
   CANSparkBase m_intakeWheel = new CANSparkMax(9, MotorType.kBrushless);
   CANSparkBase m_intakeArm = new CANSparkMax(10, MotorType.kBrushless);
 
   // SparkPIDController m_intakeArmPID = new SparkPIDController(m_intakeArm.getPIDController());
-  RelativeEncoder m_intakeArmEncoder = new RelativeEncoder(m_intakeArm.getEncoder());
+  RelativeEncoder m_intakeArmEncoder = m_intakeArm.getEncoder();
   DigitalInput m_intakeWheelLimitSwitch = new DigitalInput(0);
 
   /**
@@ -121,7 +121,7 @@ public class Robot extends TimedRobot {
   /**
    * Percent output for amp or drop note, configure based on polycarb bend
    */
-  static final double FEEDER_AMP_SPEED = .4;
+  static final double FEEDER_AMP_SPEED = 1.0;
 
   /**
    * How many amps the launcher motor can use.
@@ -147,11 +147,11 @@ public class Robot extends TimedRobot {
   /**
    * Percent output for the roller claw
    */
-  static final double INTAKE_ARM_POWER = .2;
+  static final double INTAKE_ARM_POWER = .1;
   /**
    * Percent output to help retain notes in the claw
    */
-  static final double INTAKE_WHEEL_SPEED = .4;
+  static final double INTAKE_WHEEL_POWER = .45;
   /**
    * Percent output to power the climber
    */
@@ -159,15 +159,15 @@ public class Robot extends TimedRobot {
   /**
    * Target encoder position for the intake arm while intaking
    */
-  static final double INTAKE_ARM_INTAKE_POSITION = 100;
+  static final double INTAKE_ARM_INTAKE_POSITION = -11;
   /**
    * Target encoder position for the intake arm while scoring in the amp
    */
-  static final double INTAKE_ARM_AMP_POSITION = 0;
+  static final double INTAKE_ARM_AMP_POSITION = -4.6;
   /**
    * Target encoder position for the intake arm while inside the robot
    */
-  static final double INTAKE_ARM_INSIDE_POSITION = 0;
+  static final double INTAKE_ARM_INSIDE_POSITION = -3;
 
 
   /**
@@ -245,8 +245,10 @@ public class Robot extends TimedRobot {
   @Override
   public void robotPeriodic() {
     SmartDashboard.putNumber("Time (seconds)", Timer.getFPGATimestamp());
-  }
+    SmartDashboard.putNumber("encoder", m_intakeArmEncoder.getPosition());
+    SmartDashboard.putNumber("rpm", m_launchWheelEncoder.getVelocity());
 
+  }
 
   /*
    * Auto constants, change values below in autonomousInit()for different autonomous behaviour
@@ -391,7 +393,7 @@ public class Robot extends TimedRobot {
     {
       // if(m_launchWheelEncoder.getVelocity() > LAUNCHER_RPM) // Starter code for waiting for the launcher wheel to spin up
       // {
-        // m.intakeWheel.set(INTAKE_WHEEL_SPEED); // Starter code for feeding the note into the feeder wheel
+        m_intakeWheel.set(-INTAKE_WHEEL_POWER); // Starter code for feeding the note into the feeder wheel
         m_feedWheel.set(FEEDER_OUT_SPEED);
       // }
     }
@@ -455,62 +457,73 @@ public class Robot extends TimedRobot {
      * 
      * The intake arm will also raise to a certain position when the button is released.
      */
-    // if(m_manipController.getRawButton(3))
-    // {
+    if(m_manipController.getRawButton(3))
+    {
 
-    //   // This code will lower the intake arm to a certain position when the button is held
-    //   if(m_intakeArmEncoder.getPosition() < INTAKE_ARM_INTAKE_POSITION)
-    //   {
-    //     m_intakeArm.set(INTAKE_ARM_POWER); // This will lower the intake arm
-    //   } else {
-    //     m_intakeArm.set(0); // This will stop the intake arm from moving
-    //   }
+      // This code will lower the intake arm to a certain position when the button is held
+      if(m_intakeArmEncoder.getPosition() > INTAKE_ARM_INTAKE_POSITION)
+      {
+        m_intakeArm.set(-INTAKE_ARM_POWER); // This will lower the intake arm
+      } else {
+        m_intakeArm.set(0); // This will stop the intake arm from moving
+      }
 
-    //   // This will stop the intake wheel from spinning if the limit switch is pressed
-    //   if(m_intakeWheelLimitSwitch.get()) 
-    //   {
-    //     m_intakeWheel.set(0); // This will stop the intake wheel from spinning
-    //   } else {
-    //     m_intakeWheel.set(INTAKE_WHEEL_SPEED); // This will spin the intake wheel
-    //   }
+      // This will stop the intake wheel from spinning if the limit switch is pressed
+      // if(m_intakeWheelLimitSwitch.get()) 
+      // {
+      //   m_intakeWheel.set(0); // This will stop the intake wheel from spinning
+      // } else {
+        m_intakeWheel.set(INTAKE_WHEEL_POWER); // This will spin the intake wheel
+      // }
 
-    // }
-    // else if(m_manipController.getRawButton(4)) // This code will raise the intake arm to a certain position when the button is held
-    // {
+    }
+    else if(m_manipController.getRawButton(4)) // This code will raise the intake arm to a certain position when the button is held
+    {
 
-    //   // If the arm is already at Amp height, stop the arm from moving and spin out the intake wheel
-    //   if (m_intakeArmEncoder.getPosition() > INTAKE_ARM_AMP_POSITION-10 && m_intakeArmEncoder.getPosition() < INTAKE_ARM_AMP_POSITION+10)
-    //   {
-    //     m_intakeWheel.set(-INTAKE_WHEEL_SPEED);
-    //     m_intakeArm.set(0);
-    //   }
-    //   else if(m_intakeArmEncoder.getPosition() > INTAKE_ARM_AMP_POSITION) // If the arm is below the Amp height, raise the arm
-    //   {
-    //     m_intakeArm.set(-INTAKE_ARM_POWER);
-    //   } 
-    //   else if(m_intakeArmEncoder.getPosition() < INTAKE_ARM_AMP_POSITION) // If the arm is above the Amp height, lower the arm
-    //   {
-    //     m_intakeArm.set(INTAKE_ARM_POWER);
-    //   }
+      // If the arm is already at Amp height, stop the arm from moving and spin out the intake wheel
+      if (m_intakeArmEncoder.getPosition() > INTAKE_ARM_AMP_POSITION+0.5 && m_intakeArmEncoder.getPosition() < INTAKE_ARM_AMP_POSITION-0.25)
+      {
+        m_intakeArm.set(0);
+      }
+      else if(m_intakeArmEncoder.getPosition() < INTAKE_ARM_AMP_POSITION) // If the arm is below the Amp height, raise the arm
+      {
+        m_intakeArm.set(0.03);
+      } 
+      else if(m_intakeArmEncoder.getPosition() > INTAKE_ARM_AMP_POSITION) // If the arm is above the Amp height, lower the arm
+      {
+        if(m_intakeArmEncoder.getPosition() > INTAKE_ARM_AMP_POSITION+1)
+        {
+          m_intakeArm.set(-INTAKE_ARM_POWER);
+        } else if (m_intakeArmEncoder.getPosition() > INTAKE_ARM_AMP_POSITION+0.25){
+          m_intakeArm.set(-0.03);
+        } else {
+          m_intakeArm.set(-0.01);
+        }
+      }
       
-    // }
-    // else // This code will raise the intake arm to a certain position when the button is released
-    // {
+    }
+    else // This code will raise the intake arm to a certain position when the button is released
+    {
 
-    //   // If the arm is not inside the robot, raise the arm
-    //   if(m_intakeArmEncoder.getPosition() > INTAKE_ARM_INSIDE_POSITION)
-    //   {
-    //     m_intakeArm.set(-INTAKE_ARM_POWER);
-    //   } 
-    //   else // If the arm is inside the robot, stop the arm from moving
-    //   {
-    //     m_intakeArm.set(0);
-    //   }
-    //   // This will stop the intake wheel from spinning if no button is pressed
-    //   m_intakeWheel.set(0);
+      // If the arm is not inside the robot, raise the arm
+      if(m_intakeArmEncoder.getPosition() < INTAKE_ARM_INSIDE_POSITION)
+      {
+        m_intakeArm.set(INTAKE_ARM_POWER);
+      } 
+      else // If the arm is inside the robot, stop the arm from moving
+      {
+        m_intakeArm.set(0);
+      }
+      // This will stop the intake wheel from spinning if no button is pressed
+      m_intakeWheel.set(0);
 
-    // }
+    }
 
+    if(m_manipController.getRawAxis(3) > 0.05) {
+      m_intakeWheel.set(-INTAKE_WHEEL_POWER);
+    } else if (!m_manipController.getRawButton(3) && !m_manipController.getRawButton(6)) {
+      m_intakeWheel.set(0);
+    }
 
 
     /**
@@ -520,18 +533,18 @@ public class Robot extends TimedRobot {
      * Hold down button 3 to intake note
      * Hold down button 4 to expel note
      */
-    if(m_manipController.getRawButton(3))//BUTTON 3 IS X (on xbox)
-    {
-      m_intakeWheel.set(INTAKE_WHEEL_POWER);
-    }
-    else if(m_manipController.getRawButton(4))//BUTTON 4 IS Y (on xbox)
-    {
-      m_intakeWheel.set(-INTAKE_WHEEL_POWER);
-    }
-    else
-    {
-      m_intakeWheel.set(0);
-    }
+    // if(m_manipController.getRawButton(9))//BUTTON 3 IS X (on xbox)
+    // {
+    //   m_intakeWheel.set(INTAKE_WHEEL_POWER);
+    // }
+    // else if(m_manipController.getRawButton(10))//BUTTON 4 IS Y (on xbox)
+    // {
+    //   m_intakeWheel.set(-INTAKE_WHEEL_POWER);
+    // }
+    // else
+    // {
+    //   m_intakeWheel.set(1);
+    // }
 
     /**
      * POV is the D-PAD (directional pad) on your controller, 0 == UP and 180 == DOWN
@@ -539,18 +552,18 @@ public class Robot extends TimedRobot {
      * Hold down d-pad up to raise the intake arm
      * Hold down d-pad down to lower the intake arm
      */
-    if(m_manipController.getPOV() == 0)//get pov (0) IS d-pad up (on xbox)
-    {
-      m_intakeArm.set(INTAKE_ARM_POWER);
-    }
-    else if(m_manipController.getPOV() == 180)//get pov (180) IS d-pad down (on xbox)
-    {
-      m_intakeArm.set(-INTAKE_ARM_POWER);
-    }
-    else
-    {
-      m_intakeArm.set(0);
-    }
+    // if(m_manipController.getPOV() == 0)//get pov (0) IS d-pad up (on xbox)
+    // {
+    //   m_intakeArm.set(INTAKE_ARM_POWER);
+    // }
+    // else if(m_manipController.getPOV() == 180)//get pov (180) IS d-pad down (on xbox)
+    // {
+    //   m_intakeArm.set(-INTAKE_ARM_POWER);
+    // }
+    // else
+    // {
+    //   m_intakeArm.set(0);
+    // }
 
     /**
      * POV is the D-PAD (directional pad) on your controller, 0 == UP and 180 == DOWN
