@@ -561,7 +561,7 @@ public class Robot extends TimedRobot {
 
     if(m_manipController.getRawAxis(5) > .2) {
       m_climberbox2.set(CLIMBER_OUTPUT_POWER);
-    } else if (m_manipController.getRawAxis(5) < -.2 && m_climberBox2Encoder.getPosition() > -.3) {
+    } else if (m_manipController.getRawAxis(5) < -.2 && m_climberBox2Encoder.getPosition() < -.3) {
       m_climberbox2.set(-CLIMBER_OUTPUT_POWER);
     } else if((m_manipController.getRawAxis(5) < .21 && m_manipController.getRawAxis(5) > -.21)||m_climberBox2Encoder.getPosition() > -.3) {
       m_climberbox2.set(0);
