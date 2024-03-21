@@ -67,9 +67,19 @@ public class Robot extends TimedRobot {
   CANSparkBase m_intakeWheel = new CANSparkMax(9, MotorType.kBrushless);
   CANSparkBase m_intakeArm = new CANSparkMax(10, MotorType.kBrushless);
 
+  CANSparkBase m_climberbox1 = new CANSparkMax(7, MotorType.kBrushless);  
+  CANSparkBase m_climberbox2 = new CANSparkMax(8, MotorType.kBrushless);
+
+
+
   // SparkPIDController m_intakeArmPID = new SparkPIDController(m_intakeArm.getPIDController());
   RelativeEncoder m_intakeArmEncoder = m_intakeArm.getEncoder();
+  RelativeEncoder m_climberBox1Encoder = m_climberbox1.getEncoder();
+  RelativeEncoder m_climberBox2Encoder = m_climberbox2.getEncoder();
   DigitalInput m_intakeWheelLimitSwitch = new DigitalInput(0);
+
+  // CANSparkBase m_testSpark = new CANSparkMax(62, MotorType.kBrushless);
+  // RelativeEncoder m_tesRelativeEncoder = m_testSpark.getEncoder();
 
   /**
    * Roller Claw motor controller instance.
@@ -147,23 +157,25 @@ public class Robot extends TimedRobot {
   /**
    * Percent output for the roller claw
    */
-  static final double INTAKE_ARM_POWER = .1;
+  static final double INTAKE_ARM_POWER = .15;
   /**
    * Percent output to help retain notes in the claw
    */
-  static final double INTAKE_WHEEL_POWER = .45;
+  static final double INTAKE_WHEEL_AMP = .65;
+   
+  static final double INTAKE_WHEEL_POWER = .5;
   /**
    * Percent output to power the climber
    */
-  static final double CLIMBER_OUTPUT_POWER = 1;
+  static final double CLIMBER_OUTPUT_POWER = .9;
   /**
    * Target encoder position for the intake arm while intaking
    */
-  static final double INTAKE_ARM_INTAKE_POSITION = -11;
+  static final double INTAKE_ARM_INTAKE_POSITION = -7;
   /**
    * Target encoder position for the intake arm while scoring in the amp
    */
-  static final double INTAKE_ARM_AMP_POSITION = -4.6;
+  static final double INTAKE_ARM_AMP_POSITION = -4.5;
   /**
    * Target encoder position for the intake arm while inside the robot
    */
@@ -247,6 +259,9 @@ public class Robot extends TimedRobot {
     SmartDashboard.putNumber("Time (seconds)", Timer.getFPGATimestamp());
     SmartDashboard.putNumber("encoder", m_intakeArmEncoder.getPosition());
     SmartDashboard.putNumber("rpm", m_launchWheelEncoder.getVelocity());
+    SmartDashboard.putNumber("encoder climber", m_climberBox2Encoder.getPosition());
+
+    // SmartDashboard.putNumber("Test Encoder", m_tesRelativeEncoder.getPosition());
 
   }
 
@@ -327,18 +342,20 @@ public class Robot extends TimedRobot {
     if(timeElapsed < AUTO_LAUNCH_DELAY_S)
     {
       m_launchWheel.set(AUTO_LAUNCHER_SPEED);
+      m_feedWheel.set(AUTO_LAUNCHER_SPEED);
       m_drivetrain.arcadeDrive(0, 0);
 
     }
     else if(timeElapsed < AUTO_DRIVE_DELAY_S)
     {
-      m_feedWheel.set(AUTO_LAUNCHER_SPEED);
+      m_intakeWheel.set(-INTAKE_WHEEL_POWER);
       m_drivetrain.arcadeDrive(0, 0);
     }
     else if(timeElapsed < AUTO_DRIVE_DELAY_S + AUTO_DRIVE_TIME_S)
     {
       m_launchWheel.set(0);
       m_feedWheel.set(0);
+      m_intakeWheel.set(0);
       m_drivetrain.arcadeDrive(AUTO_DRIVE_SPEED, 0);
     }
     else
@@ -378,10 +395,12 @@ public class Robot extends TimedRobot {
      */
     if (m_manipController.getRawButton(1)) {
       m_launchWheel.set(LAUNCHER_SPEED);
+      m_feedWheel.set(LAUNCHER_SPEED);
     }
     else if(m_manipController.getRawButtonReleased(1))
     {
       m_launchWheel.set(0);
+      m_feedWheel.set(0);
     }
 
     /*
@@ -394,12 +413,11 @@ public class Robot extends TimedRobot {
       // if(m_launchWheelEncoder.getVelocity() > LAUNCHER_RPM) // Starter code for waiting for the launcher wheel to spin up
       // {
         m_intakeWheel.set(-INTAKE_WHEEL_POWER); // Starter code for feeding the note into the feeder wheel
-        m_feedWheel.set(FEEDER_OUT_SPEED);
       // }
     }
     else if(m_manipController.getRawButtonReleased(6))
     {
-      m_feedWheel.set(0);
+      m_intakeWheel.set(0);
     }
 
     /*
@@ -410,11 +428,13 @@ public class Robot extends TimedRobot {
     {
       m_launchWheel.set(-LAUNCHER_SPEED);
       m_feedWheel.set(FEEDER_IN_SPEED);
+      m_intakeWheel.set(INTAKE_WHEEL_POWER);
     }
     else if(m_manipController.getRawButtonReleased(5))
     {
       m_launchWheel.set(0);
       m_feedWheel.set(0);
+      m_intakeWheel.set(0);
     }
 
     /*
@@ -424,15 +444,17 @@ public class Robot extends TimedRobot {
      * (this may take some driver practice to get working reliably)
      */
     //TODO Remove or modify
-    if(m_manipController.getRawButton(2))
+    if(m_driverController.getRawButton(2))
     {
-      m_feedWheel.set(FEEDER_AMP_SPEED);
+      m_feedWheel.set(LAUNCHER_AMP_SPEED);
       m_launchWheel.set(LAUNCHER_AMP_SPEED);
+      m_intakeWheel.set(LAUNCHER_AMP_SPEED+.1);
     }
     else if(m_manipController.getRawButtonReleased(2))
     {
       m_feedWheel.set(0);
       m_launchWheel.set(0);
+      m_intakeWheel.set(0);
     }
 
     //TODO: Add functionality so that when the button is pressed to run the intake,
@@ -473,7 +495,7 @@ public class Robot extends TimedRobot {
       // {
       //   m_intakeWheel.set(0); // This will stop the intake wheel from spinning
       // } else {
-        m_intakeWheel.set(INTAKE_WHEEL_POWER); // This will spin the intake wheel
+        m_intakeWheel.set(INTAKE_WHEEL_AMP); // This will spin the intake wheel
       // }
 
     }
@@ -481,11 +503,11 @@ public class Robot extends TimedRobot {
     {
 
       // If the arm is already at Amp height, stop the arm from moving and spin out the intake wheel
-      if (m_intakeArmEncoder.getPosition() > INTAKE_ARM_AMP_POSITION+0.5 && m_intakeArmEncoder.getPosition() < INTAKE_ARM_AMP_POSITION-0.25)
+      if (m_intakeArmEncoder.getPosition() > INTAKE_ARM_AMP_POSITION && m_intakeArmEncoder.getPosition() < INTAKE_ARM_AMP_POSITION-0.25)
       {
         m_intakeArm.set(0);
       }
-      else if(m_intakeArmEncoder.getPosition() < INTAKE_ARM_AMP_POSITION) // If the arm is below the Amp height, raise the arm
+      else if(m_intakeArmEncoder.getPosition() < INTAKE_ARM_AMP_POSITION-.25) // If the arm is below the Amp height, raise the arm
       {
         m_intakeArm.set(0.03);
       } 
@@ -494,7 +516,7 @@ public class Robot extends TimedRobot {
         if(m_intakeArmEncoder.getPosition() > INTAKE_ARM_AMP_POSITION+1)
         {
           m_intakeArm.set(-INTAKE_ARM_POWER);
-        } else if (m_intakeArmEncoder.getPosition() > INTAKE_ARM_AMP_POSITION+0.25){
+        } else if (m_intakeArmEncoder.getPosition() > INTAKE_ARM_AMP_POSITION+0.15){
           m_intakeArm.set(-0.03);
         } else {
           m_intakeArm.set(-0.01);
@@ -515,16 +537,36 @@ public class Robot extends TimedRobot {
         m_intakeArm.set(0);
       }
       // This will stop the intake wheel from spinning if no button is pressed
-      m_intakeWheel.set(0);
 
+    }
+    if (m_manipController.getRawButtonReleased(3)||m_manipController.getRawButtonReleased(4)){
+      m_intakeWheel.set(0);
     }
 
     if(m_manipController.getRawAxis(3) > 0.05) {
       m_intakeWheel.set(-INTAKE_WHEEL_POWER);
-    } else if (!m_manipController.getRawButton(3) && !m_manipController.getRawButton(6)) {
+    } else if (!m_manipController.getRawButton(3) && !m_manipController.getRawButton(6) && !m_manipController.getRawButton(5)) {
       m_intakeWheel.set(0);
     }
 
+    //climber code
+
+    if(m_manipController.getRawAxis(1) > .2) {
+      m_climberbox1.set(CLIMBER_OUTPUT_POWER);
+    } else if (m_manipController.getRawAxis(1) < -.2 && m_climberBox1Encoder.getPosition() < -.3) {
+      m_climberbox1.set(-CLIMBER_OUTPUT_POWER);
+    } else if((m_manipController.getRawAxis(1) < .21 && m_manipController.getRawAxis(1) > -.21)||m_climberBox1Encoder.getPosition() > -.3) {
+      m_climberbox1.set(0);
+    }
+
+    if(m_manipController.getRawAxis(5) > .2) {
+      m_climberbox2.set(CLIMBER_OUTPUT_POWER);
+    } else if (m_manipController.getRawAxis(5) < -.2 && m_climberBox2Encoder.getPosition() > -.3) {
+      m_climberbox2.set(-CLIMBER_OUTPUT_POWER);
+    } else if((m_manipController.getRawAxis(5) < .21 && m_manipController.getRawAxis(5) > -.21)||m_climberBox2Encoder.getPosition() > -.3) {
+      m_climberbox2.set(0);
+    }
+    
 
     /**
      * BUTTON 3 is X (on xbox)
